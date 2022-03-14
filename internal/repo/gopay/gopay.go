@@ -58,5 +58,10 @@ func (r *Repo) GetByUserIDDB(ctx context.Context, userID int64) (gopay.GopaySald
 		return gopay.GopaySaldo{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
 	}
 
+	err = gopaySaldo.Validate()
+	if err != nil {
+		return gopay.GopaySaldo{}, ers.ErrorAddTrace(err)
+	}
+
 	return gopaySaldo, nil
 }

@@ -32,7 +32,7 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	defer span.Finish()
 
 	// params checking
-	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
+	userID, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
 	if err != nil {
 		log.Error("[gopay.GetByUserID] error from Parse Param: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -40,7 +40,7 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	gopay, err := h.GopayUC.GetByUserID(ctx, user_id)
+	gopay, err := h.GopayUC.GetByUserID(ctx, userID)
 	if err != nil {
 		log.Error("[gopay.GetByUserID] error from GetByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get gopay`)

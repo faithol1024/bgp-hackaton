@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/faithol1024/bgp-hackaton/internal/entity/bid"
 
 	firebase "firebase.google.com/go/v4"
@@ -9,6 +10,7 @@ import (
 	"github.com/faithol1024/bgp-hackaton/internal/config"
 	bidhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/bid"
 	gopayhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/gopay"
+	producthandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/product"
 	bidrepo "github.com/faithol1024/bgp-hackaton/internal/repo/bid"
 	gopayrepo "github.com/faithol1024/bgp-hackaton/internal/repo/gopay"
 	bidusecase "github.com/faithol1024/bgp-hackaton/internal/usecase/bid"
@@ -36,8 +38,9 @@ func startApp(cfg *config.Config) error {
 	bidRepo := bidrepo.New(dbrf)
 
 	router := newRoutes(RouteHandlers{
-		gopay: gopayhandler.New(gopayusecase.New(gopayRepo)),
-		bid:   bidhandler.New(bidusecase.New(bidRepo)),
+		gopay:   gopayhandler.New(gopayusecase.New(gopayRepo)),
+		bid:     bidhandler.New(bidusecase.New(bidRepo)),
+		product: producthandler.New(),
 	})
 
 	return startServer(router, cfg)

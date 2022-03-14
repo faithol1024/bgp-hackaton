@@ -2,12 +2,13 @@ package http
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/faithol1024/bgp-hackaton/internal/entity/bid"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
 	"github.com/tokopedia/tdk/go/httpt/response"
 	"github.com/tokopedia/tdk/go/log"
 	"github.com/tokopedia/tdk/go/tracer"
-	"net/http"
 )
 
 type bidUseCase interface {
@@ -38,7 +39,7 @@ func (h *Handler) PublishBidFRDB(w http.ResponseWriter, r *http.Request) {
 
 	// call the usecase
 	// for test
-	err := h.BidUC.UpdateBidFRDB(ctx, bid.Bid{ID: "1", Count: 3})
+	err := h.BidUC.UpdateBidFRDB(ctx, bid.Bid{BidID: "1", Amount: 100})
 	if err != nil {
 		log.Error("[bid.PublishBidFRDB] error from PublishBidFRDB: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get bid`)
