@@ -28,8 +28,15 @@ func New(repoName string) (*Config, error) {
 }
 
 type Config struct {
-	Server Server       `yaml:"server"`
-	Redis  redis.Config `yaml:"redis"`
+	Server   Server       `yaml:"server"`
+	Firebase Firebase     `yaml:"firebase"`
+	Redis    redis.Config `yaml:"redis"`
+}
+
+type Firebase struct {
+	ProjectID      string `yaml:"project_id"`
+	DatabaseURL    string `yaml:"database_url"`
+	CredentialPath string `yaml:"credential_path"`
 }
 
 type Server struct {

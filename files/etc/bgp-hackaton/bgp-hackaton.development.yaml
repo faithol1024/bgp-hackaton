@@ -9,6 +9,11 @@ log:
   debug_path: ./log/debug.log # classic logging, log not streamed
   caller: false
 
+firebase:
+  project_id: "bgp-hackathon"
+  database_url: "https://bgp-hackathon-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  credential_path: "./bgp-hackathon-firebase-adminsdk-bfh83-ab13540558.json"
+
 redis:
   engine: "redigo"
   max_active_conn: 100
