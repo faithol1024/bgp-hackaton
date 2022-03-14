@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	gopayhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/gopay"
+	producthandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/product"
 	"github.com/go-chi/chi"
 	"github.com/tokopedia/tdk/go/httpt/middleware"
 	chiMW "github.com/tokopedia/tdk/go/httpt/middleware/chi"
@@ -12,7 +13,8 @@ import (
 )
 
 type RouteHandlers struct {
-	gopay *gopayhandler.Handler
+	gopay   *gopayhandler.Handler
+	product *producthandler.Handler
 }
 
 func newRoutes(handler RouteHandlers) *chi.Mux {
@@ -24,6 +26,12 @@ func newRoutes(handler RouteHandlers) *chi.Mux {
 	)
 
 	router.Method(http.MethodGet, "/gopay/get/{user_id}", mw.HandlerFunc(handler.gopay.GetByUserID))
+	router.Method(http.MethodGet, "/products", mw.HandlerFunc(handler.product.GetAll))
+	router.Method(http.MethodGet, "/products/buyer", mw.HandlerFunc(handler.product.GetAllByBuyer))
+	router.Method(http.MethodGet, "/products/seller", mw.HandlerFunc(handler.product.GetAllBySeller))
+	router.Method(http.MethodGet, "/product/{product_id}", mw.HandlerFunc(handler.product.GetByID))
+	router.Method(http.MethodPost, "/product", mw.HandlerFunc(handler.product.Create))
+	router.Method(http.MethodPost, "/bid", mw.HandlerFunc(handler.product.Bid))
 	router.Method(http.MethodGet, "/ping", mw.HandlerFunc(Ping))
 
 	return router
