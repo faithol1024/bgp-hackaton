@@ -5,13 +5,13 @@ import (
 	"net"
 	"os"
 
-	"github.com/faithol1024/bgp-hackathon/internal/config"
-	"github.com/tokopedia/campaign-engine/common/util"
+	"github.com/faithol1024/bgp-hackaton/internal/config"
+	"github.com/faithol1024/bgp-hackaton/lib/util"
 	"github.com/tokopedia/tdk/go/log"
 )
 
 const (
-	repoName = "bgp-hackathon"
+	repoName = "bgp-hackaton"
 )
 
 func main() {

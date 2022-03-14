@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/faithol1024/bgp-hackathon/internal/config"
+	"github.com/faithol1024/bgp-hackaton/internal/config"
 	"github.com/tokopedia/tdk/go/grace"
 )
 

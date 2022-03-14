@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
-	gopayhandler "github.com/faithol1024/bgp-hackhaton/internal/handler/http/gopay"
+	gopayhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/gopay"
 	"github.com/go-chi/chi"
 	"github.com/tokopedia/tdk/go/httpt/middleware"
 	chiMW "github.com/tokopedia/tdk/go/httpt/middleware/chi"
@@ -22,7 +23,12 @@ func newRoutes(handler RouteHandlers) *chi.Mux {
 		panics.CaptureHandlerFunc,
 	)
 
-	router.Method(http.MethodGet, "/gopay/get", mw.HandlerFunc(handler.gopay.GetByUserID))
+	router.Method(http.MethodGet, "/gopay/get/{user_id}", mw.HandlerFunc(handler.gopay.GetByUserID))
+	router.Method(http.MethodGet, "/ping", mw.HandlerFunc(Ping))
 
 	return router
+}
+
+func Ping(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Pong")
 }
