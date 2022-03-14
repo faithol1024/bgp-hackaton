@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	bidhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/bid"
 	gopayhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/gopay"
 	producthandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/product"
 	"github.com/go-chi/chi"
@@ -14,6 +15,7 @@ import (
 
 type RouteHandlers struct {
 	gopay   *gopayhandler.Handler
+	bid     *bidhandler.Handler
 	product *producthandler.Handler
 }
 
@@ -33,6 +35,9 @@ func newRoutes(handler RouteHandlers) *chi.Mux {
 	router.Method(http.MethodPost, "/product", mw.HandlerFunc(handler.product.Create))
 	router.Method(http.MethodPost, "/bid", mw.HandlerFunc(handler.product.Bid))
 	router.Method(http.MethodGet, "/ping", mw.HandlerFunc(Ping))
+
+	//for test
+	router.Method(http.MethodGet, "/bid", mw.HandlerFunc(handler.bid.PublishBidFRDB))
 
 	return router
 }

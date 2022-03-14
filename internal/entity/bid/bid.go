@@ -2,6 +2,8 @@ package bid
 
 import "errors"
 
+const AuctionRef = "Auction"
+
 type Bid struct {
 	BidID      string `json:"bid_id"`
 	ProductID  string `json:"product_id"`
