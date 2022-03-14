@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/faithol1024/bgp-hackaton/internal/config"
 	gopayhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/gopay"
+	producthandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/product"
 	gopayrepo "github.com/faithol1024/bgp-hackaton/internal/repo/gopay"
 	gopayusecase "github.com/faithol1024/bgp-hackaton/internal/usecase/gopay"
 	"github.com/tokopedia/tdk/go/redis"
@@ -24,7 +25,8 @@ func startApp(cfg *config.Config) error {
 	gopayRepo := gopayrepo.New(dyna, redis)
 
 	router := newRoutes(RouteHandlers{
-		gopay: gopayhandler.New(gopayusecase.New(gopayRepo)),
+		gopay:   gopayhandler.New(gopayusecase.New(gopayRepo)),
+		product: producthandler.New(),
 	})
 
 	return startServer(router, cfg)
