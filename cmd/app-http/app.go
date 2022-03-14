@@ -37,10 +37,12 @@ func startApp(cfg *config.Config) error {
 	dyna := initDynamo()
 	dbrf := initFirebaseRDB(cfg)
 
+	// init repos
 	gopayRepo := gopayrepo.New(dyna, redis)
 	userRepo := userrepo.New(dyna, redis)
 	bidRepo := bidrepo.New(dbrf)
 
+	// init routers
 	router := newRoutes(RouteHandlers{
 		user:    userhandler.New(userusecase.New(userRepo)),
 		gopay:   gopayhandler.New(gopayusecase.New(gopayRepo)),

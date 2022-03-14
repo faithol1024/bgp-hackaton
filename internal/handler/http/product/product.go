@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -13,11 +14,11 @@ import (
 )
 
 type productUseCase interface {
-	// 	GetByUserID(ctx context.Context, userID int64) (gopay.GopaySaldo, error)
+	Create(ctx context.Context, product product.Product) error
 }
 
 type Handler struct {
-	// GopayUC gopayUseCase
+	ProductUC productUseCase
 }
 
 func New() *Handler {

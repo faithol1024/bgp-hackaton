@@ -33,9 +33,9 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	defer span.Finish()
 
 	// params checking
-	userID, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
-	if err != nil {
-		log.Error("[gopay.GetByUserID] error from Parse Param: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+	userID := chi.URLParam(r, "user_id")
+	if userID == "" {
+		log.Error("[gopay.GetByUserID] Invalid Param")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

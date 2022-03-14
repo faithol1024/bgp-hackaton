@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/gopay"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
-	"github.com/faithol1024/bgp-hackaton/lib/util"
 	"github.com/tokopedia/tdk/go/redis"
 )
 
@@ -33,16 +32,16 @@ const (
 	gopayHistoryAttributes = "user_id,gopay_id,amount_idr,bid_id"
 )
 
-func (r *Repo) GetByUserID(ctx context.Context, userID int64) (gopay.GopaySaldo, error) {
+func (r *Repo) GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error) {
 	return r.GetByUserIDDB(ctx, userID)
 }
 
-func (r *Repo) GetByUserIDDB(ctx context.Context, userID int64) (gopay.GopaySaldo, error) {
+func (r *Repo) GetByUserIDDB(ctx context.Context, userID string) (gopay.GopaySaldo, error) {
 	result, err := r.db.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(gopayTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"user_id": {
-				N: aws.String(util.Int64ToString(userID)),
+				N: aws.String(userID),
 			},
 		},
 		ProjectionExpression: aws.String(gopayAttributes),
@@ -51,7 +50,7 @@ func (r *Repo) GetByUserIDDB(ctx context.Context, userID int64) (gopay.GopaySald
 		return gopay.GopaySaldo{}, ers.ErrorAddTrace(err)
 	}
 	if result.Item == nil {
-		return gopay.GopaySaldo{}, ers.ErrorAddTrace(fmt.Errorf("Table %s not found", gopayTable))
+		return gopay.GopaySaldo{}, ers.ErrorAddTrace(fmt.Errorf("User %s Gopay Not Found", userID))
 	}
 
 	gopaySaldo := gopay.GopaySaldo{}

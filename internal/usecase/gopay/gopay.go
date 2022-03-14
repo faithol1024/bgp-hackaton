@@ -23,8 +23,8 @@ func New(gopayResource gopayResource) *UseCase {
 	}
 }
 
-func (uc *UseCase) GetByUserID(ctx context.Context, userID int64) (gopay.GopaySaldo, error) {
-	if userID == 0 {
+func (uc *UseCase) GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error) {
+	if userID == "" {
 		return gopay.GopaySaldo{}, ers.ErrorAddTrace(errors.New("invalid user_id"))
 	}
 	return uc.gopayRsc.GetByUserID(ctx, userID)
