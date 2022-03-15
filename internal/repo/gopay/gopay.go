@@ -68,11 +68,11 @@ func (r *Repo) GetByUserIDDB(ctx context.Context, userID string) (gopay.GopaySal
 	return gopaySaldo, nil
 }
 
-func (r *Repo) GetHistoryByUserID(ctx context.Context, userID int64) ([]gopay.GopayHistory, error) {
+func (r *Repo) GetHistoryByUserID(ctx context.Context, userID string) ([]gopay.GopayHistory, error) {
 	return r.GetHistoryByUserIDDB(ctx, userID)
 }
 
-func (r *Repo) GetHistoryByUserIDDB(ctx context.Context, userID int64) ([]gopay.GopayHistory, error) {
+func (r *Repo) GetHistoryByUserIDDB(ctx context.Context, userID string) ([]gopay.GopayHistory, error) {
 	return []gopay.GopayHistory{
 		{
 			GopayHistoryID: "1",

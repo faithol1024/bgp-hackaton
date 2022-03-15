@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/user"
 	"github.com/tokopedia/tdk/go/redis"
@@ -24,11 +25,11 @@ const (
 	userAttributes = "user_id,name,email"
 )
 
-func (r *Repo) GetByUserID(ctx context.Context, userID int64) (user.User, error) {
+func (r *Repo) GetByUserID(ctx context.Context, userID string) (user.User, error) {
 	return r.GetByUserIDDB(ctx, userID)
 }
 
-func (r *Repo) GetByUserIDDB(ctx context.Context, userID int64) (user.User, error) {
+func (r *Repo) GetByUserIDDB(ctx context.Context, userID string) (user.User, error) {
 	return user.User{
 		UserID: "1",
 		Name:   "angga",

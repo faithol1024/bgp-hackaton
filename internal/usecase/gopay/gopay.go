@@ -9,8 +9,8 @@ import (
 )
 
 type gopayResource interface {
-	GetByUserID(ctx context.Context, userID int64) (gopay.GopaySaldo, error)
-	GetHistoryByUserID(ctx context.Context, userID int64) ([]gopay.GopayHistory, error)
+	GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error)
+	GetHistoryByUserID(ctx context.Context, userID string) ([]gopay.GopayHistory, error)
 }
 
 type UseCase struct {
@@ -30,8 +30,8 @@ func (uc *UseCase) GetByUserID(ctx context.Context, userID string) (gopay.GopayS
 	return uc.gopayRsc.GetByUserID(ctx, userID)
 }
 
-func (uc *UseCase) GetHistoryByUserID(ctx context.Context, userID int64) ([]gopay.GopayHistory, error) {
-	if userID == 0 {
+func (uc *UseCase) GetHistoryByUserID(ctx context.Context, userID string) ([]gopay.GopayHistory, error) {
+	if userID == "" {
 		return nil, ers.ErrorAddTrace(errors.New("invalid user_id"))
 	}
 	return uc.gopayRsc.GetHistoryByUserID(ctx, userID)
