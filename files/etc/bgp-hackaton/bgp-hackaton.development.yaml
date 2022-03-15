@@ -12,7 +12,7 @@ log:
 firebase:
   project_id: "bgp-hackathon"
   database_url: "https://bgp-hackathon-default-rtdb.asia-southeast1.firebasedatabase.app/"
-  credential_path: "./bgp-hackathon-firebase-adminsdk-bfh83-ab13540558.json"
+  credential_path: "./bgp-hackathon-firebase-adminsdk-bfh83-0a6374a1f4.json"
 
 redis:
   engine: "redigo"

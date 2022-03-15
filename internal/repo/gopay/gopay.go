@@ -26,8 +26,11 @@ func New(db *dynamodb.DynamoDB, cache *redis.Client) *Repo {
 }
 
 const (
-	tableName       = "gopay"
+	gopayTable      = "gopay"
 	gopayAttributes = "user_id,amount_idr,amount_point"
+
+	gopayHistoryTable      = "gopay_history"
+	gopayHistoryAttributes = "user_id,gopay_id,amount_idr,bid_id"
 )
 
 func (r *Repo) GetByUserID(ctx context.Context, userID int64) (gopay.GopaySaldo, error) {
@@ -36,7 +39,7 @@ func (r *Repo) GetByUserID(ctx context.Context, userID int64) (gopay.GopaySaldo,
 
 func (r *Repo) GetByUserIDDB(ctx context.Context, userID int64) (gopay.GopaySaldo, error) {
 	result, err := r.db.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(gopayTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"user_id": {
 				N: aws.String(util.Int64ToString(userID)),
@@ -48,7 +51,7 @@ func (r *Repo) GetByUserIDDB(ctx context.Context, userID int64) (gopay.GopaySald
 		return gopay.GopaySaldo{}, ers.ErrorAddTrace(err)
 	}
 	if result.Item == nil {
-		return gopay.GopaySaldo{}, ers.ErrorAddTrace(fmt.Errorf("Table %s not found", tableName))
+		return gopay.GopaySaldo{}, ers.ErrorAddTrace(fmt.Errorf("Table %s not found", gopayTable))
 	}
 
 	gopaySaldo := gopay.GopaySaldo{}
@@ -64,4 +67,59 @@ func (r *Repo) GetByUserIDDB(ctx context.Context, userID int64) (gopay.GopaySald
 	}
 
 	return gopaySaldo, nil
+}
+
+func (r *Repo) GetHistoryByUserID(ctx context.Context, userID int64) ([]gopay.GopayHistory, error) {
+	return r.GetHistoryByUserIDDB(ctx, userID)
+}
+
+func (r *Repo) GetHistoryByUserIDDB(ctx context.Context, userID int64) ([]gopay.GopayHistory, error) {
+	return []gopay.GopayHistory{
+		{
+			GopayHistoryID: "1",
+			UserID:         "1",
+			GopayID:        "1",
+			AmountIDR:      0,
+			BidID:          "1",
+		},
+		{
+			GopayHistoryID: "2",
+			UserID:         "1",
+			GopayID:        "1",
+			AmountIDR:      0,
+			BidID:          "2",
+		},
+	}, nil
+	//// bisa ga nih keynya untuk cuma dapet user id aja
+	//result, err := r.db.GetItem(&dynamodb.GetItemInput{
+	//	TableName: aws.String(gopayHistoryTable),
+	//	Key: map[string]*dynamodb.AttributeValue{
+	//		"user_id": {
+	//			N: aws.String(util.Int64ToString(userID)),
+	//		},
+	//	},
+	//	ProjectionExpression: aws.String(gopayHistoryAttributes),
+	//})
+	//if err != nil {
+	//	return nil, ers.ErrorAddTrace(err)
+	//}
+	//if result.Item == nil {
+	//	return nil, ers.ErrorAddTrace(fmt.Errorf("Table %s not found", gopayHistoryTable))
+	//}
+	//
+	//gopayHistories := []gopay.GopayHistory{}
+	//
+	//err = dynamodbattribute.UnmarshalMap(result.Item, &gopayHistories)
+	//if err != nil {
+	//	return nil, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+	//}
+	//
+	//for _, gopayHistory := range gopayHistories {
+	//	err = gopayHistory.Validate()
+	//	if err != nil {
+	//		return nil, ers.ErrorAddTrace(err)
+	//	}
+	//}
+	//
+	//return gopayHistories, nil
 }
