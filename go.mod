@@ -3,7 +3,7 @@ module github.com/faithol1024/bgp-hackaton
 go 1.14
 
 require (
-	github.com/aws/aws-sdk-go v1.43.17
+	github.com/aws/aws-sdk-go v1.43.19
 	github.com/go-chi/chi v1.5.4
 	github.com/tokopedia/tdk v1.2.17
 	gopkg.in/yaml.v2 v2.4.0

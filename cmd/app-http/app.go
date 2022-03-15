@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	userhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/user"
 
 	"github.com/faithol1024/bgp-hackaton/internal/entity/bid"
@@ -14,9 +15,11 @@ import (
 	producthandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/product"
 	bidrepo "github.com/faithol1024/bgp-hackaton/internal/repo/bid"
 	gopayrepo "github.com/faithol1024/bgp-hackaton/internal/repo/gopay"
+	productrepo "github.com/faithol1024/bgp-hackaton/internal/repo/product"
 	userrepo "github.com/faithol1024/bgp-hackaton/internal/repo/user"
 	bidusecase "github.com/faithol1024/bgp-hackaton/internal/usecase/bid"
 	gopayusecase "github.com/faithol1024/bgp-hackaton/internal/usecase/gopay"
+	"github.com/faithol1024/bgp-hackaton/internal/usecase/product"
 	userusecase "github.com/faithol1024/bgp-hackaton/internal/usecase/user"
 	"github.com/tokopedia/tdk/go/log"
 	"github.com/tokopedia/tdk/go/redis"
@@ -40,6 +43,7 @@ func startApp(cfg *config.Config) error {
 	// init repos
 	gopayRepo := gopayrepo.New(dyna, redis)
 	userRepo := userrepo.New(dyna, redis)
+	productRepo := productrepo.New(dyna, redis)
 	bidRepo := bidrepo.New(dbrf)
 
 	// init routers
@@ -47,7 +51,7 @@ func startApp(cfg *config.Config) error {
 		user:    userhandler.New(userusecase.New(userRepo)),
 		gopay:   gopayhandler.New(gopayusecase.New(gopayRepo)),
 		bid:     bidhandler.New(bidusecase.New(bidRepo)),
-		product: producthandler.New(),
+		product: producthandler.New(product.New(productRepo)),
 	})
 
 	return startServer(router, cfg)
