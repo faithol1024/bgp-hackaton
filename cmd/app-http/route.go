@@ -7,6 +7,7 @@ import (
 	bidhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/bid"
 	gopayhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/gopay"
 	producthandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/product"
+	userhandler "github.com/faithol1024/bgp-hackaton/internal/handler/http/user"
 	"github.com/go-chi/chi"
 	"github.com/tokopedia/tdk/go/httpt/middleware"
 	chiMW "github.com/tokopedia/tdk/go/httpt/middleware/chi"
@@ -14,6 +15,7 @@ import (
 )
 
 type RouteHandlers struct {
+	user    *userhandler.Handler
 	gopay   *gopayhandler.Handler
 	bid     *bidhandler.Handler
 	product *producthandler.Handler
@@ -26,8 +28,11 @@ func newRoutes(handler RouteHandlers) *chi.Mux {
 		middleware.Prometheus(repoName, chiMW.MetricLabels(router)),
 		panics.CaptureHandlerFunc,
 	)
+	router.Method(http.MethodGet, "/user/{user_id}", mw.HandlerFunc(handler.user.GetByUserID))
+	router.Method(http.MethodPost, "/user", mw.HandlerFunc(handler.user.Create))
 
-	router.Method(http.MethodGet, "/gopay/get/{user_id}", mw.HandlerFunc(handler.gopay.GetByUserID))
+	router.Method(http.MethodGet, "/gopay/user/{user_id}", mw.HandlerFunc(handler.gopay.GetByUserID))
+	router.Method(http.MethodGet, "/gopay/user/history/{user_id}", mw.HandlerFunc(handler.gopay.GetHistoryByUserID))
 	router.Method(http.MethodGet, "/products", mw.HandlerFunc(handler.product.GetAll))
 	router.Method(http.MethodGet, "/products/buyer", mw.HandlerFunc(handler.product.GetAllByBuyer))
 	router.Method(http.MethodGet, "/products/seller", mw.HandlerFunc(handler.product.GetAllBySeller))
