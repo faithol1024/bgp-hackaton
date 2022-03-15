@@ -9,7 +9,7 @@ import (
 )
 
 type userResource interface {
-	GetByUserID(ctx context.Context, userID int64) (user.User, error)
+	GetByUserID(ctx context.Context, userID string) (user.User, error)
 	Create(ctx context.Context, user user.User) (user.User, error)
 }
 
@@ -23,8 +23,8 @@ func New(userResource userResource) *UseCase {
 	}
 }
 
-func (uc *UseCase) GetByUserID(ctx context.Context, userID int64) (user.User, error) {
-	if userID == 0 {
+func (uc *UseCase) GetByUserID(ctx context.Context, userID string) (user.User, error) {
+	if userID == "" {
 		return user.User{}, ers.ErrorAddTrace(errors.New("invalid user_id"))
 	}
 	return uc.userRsc.GetByUserID(ctx, userID)

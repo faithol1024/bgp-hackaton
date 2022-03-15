@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/faithol1024/bgp-hackaton/internal/entity/gopay"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
@@ -14,8 +13,8 @@ import (
 )
 
 type gopayUseCase interface {
-	GetByUserID(ctx context.Context, userID int64) (gopay.GopaySaldo, error)
-	GetHistoryByUserID(ctx context.Context, userID int64) ([]gopay.GopayHistory, error)
+	GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error)
+	GetHistoryByUserID(ctx context.Context, userID string) ([]gopay.GopayHistory, error)
 }
 
 type Handler struct {
@@ -33,9 +32,9 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	defer span.Finish()
 
 	// params checking
-	userID, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
-	if err != nil {
-		log.Error("[gopay.GetByUserID] error from Parse Param: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+	userID := chi.URLParam(r, "user_id")
+	if userID == "" {
+		log.Error("[gopay.GetByUserID] Invalid Param")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -59,9 +58,9 @@ func (h *Handler) GetHistoryByUserID(w http.ResponseWriter, r *http.Request) {
 	defer span.Finish()
 
 	// params checking
-	userID, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
-	if err != nil {
-		log.Error("[gopay.GetHistoryByUserID] error from Parse Param: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+	userID := chi.URLParam(r, "user_id")
+	if userID == "" {
+		log.Error("[user.GetHistoryByUserID] error Invalid param")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

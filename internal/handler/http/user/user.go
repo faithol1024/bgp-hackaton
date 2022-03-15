@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/faithol1024/bgp-hackaton/internal/entity/user"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
@@ -15,7 +14,7 @@ import (
 )
 
 type userUseCase interface {
-	GetByUserID(ctx context.Context, userID int64) (user.User, error)
+	GetByUserID(ctx context.Context, userID string) (user.User, error)
 	Create(ctx context.Context, user user.User) (user.User, error)
 }
 
@@ -34,9 +33,9 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	defer span.Finish()
 
 	// params checking
-	userID, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
-	if err != nil {
-		log.Error("[user.GetByUserID] error from Parse Param: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+	userID := chi.URLParam(r, "user_id")
+	if userID == "" {
+		log.Error("[user.GetByID] error Invalid param")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	constanta "github.com/faithol1024/bgp-hackaton/lib/const"
+	"github.com/google/uuid"
 )
 
 func GetEnv() string {
@@ -38,4 +39,9 @@ func GetLineOfCode(skip int) string {
 	)
 
 	return details
+}
+
+func GetStringUUID() string {
+	id := uuid.New()
+	return id.String()
 }
