@@ -18,7 +18,13 @@ type Product struct {
 	EndTime      int64  `json:"end_time"`
 	HighestBidID string `json:"highest_bid_id"`
 	TotalBidder  int64  `json:"total_bidder"`
+	Status       string `json:"status"`
 }
+
+const (
+	StatusDone = "done"
+	StatusNew  = "new"
+)
 
 func (p *Product) Validate() error {
 	if p.UserID == "" {

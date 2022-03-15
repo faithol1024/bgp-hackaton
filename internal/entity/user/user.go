@@ -8,6 +8,11 @@ type User struct {
 	Email  string `json:"email"`
 }
 
+const (
+	RoleSeller = "seller"
+	RoleBuyer  = "buyer"
+)
+
 func (u *User) Validate() error {
 	if u.Name == "" {
 		return errors.New("Invalid Name")
