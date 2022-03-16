@@ -53,7 +53,7 @@ func startApp(cfg *config.Config) error {
 		user:    userhandler.New(userusecase.New(userRepo, gopayUC)),
 		gopay:   gopayhandler.New(gopayUC),
 		bid:     bidhandler.New(bidusecase.New(bidRepo)),
-		product: producthandler.New(product.New(productRepo, bidRepo, gopayRepo)),
+		product: producthandler.New(product.New(productRepo, bidRepo, gopayRepo, userRepo)),
 	})
 
 	return startServer(router, cfg)

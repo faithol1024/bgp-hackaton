@@ -1,6 +1,9 @@
 package user
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type User struct {
 	UserID   string `json:"user_id"`
@@ -21,4 +24,21 @@ func (u *User) Validate() error {
 		return errors.New("Invalid Email")
 	}
 	return nil
+}
+
+func (u *User) GetMaskedName() string {
+	temp := strings.Fields(u.UserName)
+	res := ""
+	for _, t := range temp {
+		word := ""
+		for i := 0; i < len(t); i++ {
+			if i == 0 {
+				word += string(t[i])
+			}
+			word += "*"
+		}
+		res += word + " "
+	}
+	res = strings.TrimSpace(res)
+	return res
 }

@@ -33,17 +33,23 @@ type gopayResource interface {
 	GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error)
 }
 
+type userResource interface {
+	GetByID(ctx context.Context, userID string) (user.User, error)
+}
+
 type UseCase struct {
 	productRsc productResource
 	bidRsc     bidResource
 	gopayRsc   gopayResource
+	userRsc    userResource
 }
 
-func New(productRsc productResource, bidRsc bidResource, gopayRsc gopayResource) *UseCase {
+func New(productRsc productResource, bidRsc bidResource, gopayRsc gopayResource, userRsc userResource) *UseCase {
 	return &UseCase{
 		productRsc: productRsc,
 		bidRsc:     bidRsc,
 		gopayRsc:   gopayRsc,
+		userRsc:    userRsc,
 	}
 }
 
@@ -70,6 +76,22 @@ func (uc *UseCase) GetByID(ctx context.Context, ID string) (productEntity.Produc
 	err = productRes.Validate()
 	if err != nil {
 		return productEntity.Product{}, ers.ErrorAddTrace(err)
+	}
+
+	//getuser idnya dari bid tertinggi
+	//bidRes, err := uc.bidRsc.GetHighestBidAmountByProduct(ctx, productRes.ProductID)
+	//if err != nil {
+	//	return productEntity.Product{}, ers.ErrorAddTrace(err)
+	//}
+
+	userRes, err := uc.userRsc.GetByID(ctx, productRes.UserID)
+	if err != nil {
+		return productEntity.Product{}, ers.ErrorAddTrace(err)
+	}
+	if time.Now().Unix() >= productRes.EndTime {
+		productRes.UserName = userRes.GetMaskedName()
+	} else {
+		productRes.UserName = userRes.UserName
 	}
 
 	return productRes, nil
