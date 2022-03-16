@@ -16,7 +16,7 @@ import (
 )
 
 type productUseCase interface {
-	Create(ctx context.Context, product productEntity.Product) error
+	Create(ctx context.Context, product productEntity.Product) (productEntity.Product, error)
 	GetByID(ctx context.Context, id string) (productEntity.Product, error)
 	GetAll(ctx context.Context, userID string, role string) ([]productEntity.Product, error)
 	Bid(ctx context.Context, bid bid.Bid) (bid.Bid, error)
@@ -138,7 +138,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = product.Validate()
+	err = product.ValidateInput()
 	if err != nil {
 		log.Error("[product.Create] Invalid param")
 		w.WriteHeader(http.StatusBadRequest)
@@ -146,8 +146,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	product.Status = productEntity.StatusNew
-	err = h.ProductUC.Create(ctx, product)
+	product, err = h.ProductUC.Create(ctx, product)
 	if err != nil {
 		log.Error("[product.Create] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `gaboleh bikin product yee`)

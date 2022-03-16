@@ -35,3 +35,16 @@ func (p *Product) Validate() error {
 	}
 	return nil
 }
+
+func (p *Product) ValidateInput() error {
+	if p.UserID == "" {
+		return ers.ErrorAddTrace(errors.New("Invalid User"))
+	}
+	if p.EndTime == 0 {
+		return ers.ErrorAddTrace(errors.New("Invalid End time"))
+	}
+	if p.Name == "" {
+		return ers.ErrorAddTrace(errors.New("Invalid Name"))
+	}
+	return nil
+}

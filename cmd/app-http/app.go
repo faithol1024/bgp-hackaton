@@ -44,7 +44,7 @@ func startApp(cfg *config.Config) error {
 	gopayRepo := gopayrepo.New(dyna, redis)
 	userRepo := userrepo.New(dyna, redis)
 	productRepo := productrepo.New(dyna, redis)
-	bidRepo := bidrepo.New(dbrf)
+	bidRepo := bidrepo.New(dbrf, redis, dyna)
 
 	gopayUC := gopayusecase.New(gopayRepo)
 
