@@ -24,6 +24,7 @@ type productResource interface {
 type bidResource interface {
 	Bid(ctx context.Context, bid bid.Bid, product productEntity.Product) (int64, error)
 	GetHighestBidAmountByProduct(ctx context.Context, product productEntity.Product) (int64, error)
+	GetHighestBidAmountByProductDB(ctx context.Context, productID string) (bid.Bid, error)
 	AntiDoubleRequest(ctx context.Context, userID string) error
 	ReleaseAntiDoubleRequest(ctx context.Context, userID string) error
 	GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid, error)
@@ -80,13 +81,10 @@ func (uc *UseCase) GetByID(ctx context.Context, ID string) (productEntity.Produc
 	if err != nil {
 		return productEntity.Product{}, ers.ErrorAddTrace(err)
 	}
-
-	//getuser idnya dari bid tertinggi
-	//bidRes, err := uc.bidRsc.GetHighestBidAmountByProduct(ctx, productRes.ProductID)
+	//bidRes, err := uc.bidRsc.GetHighestBidAmountByProductDB(ctx, productRes.ProductID)
 	//if err != nil {
 	//	return productEntity.Product{}, ers.ErrorAddTrace(err)
 	//}
-
 	userRes, err := uc.userRsc.GetByID(ctx, productRes.UserID)
 	if err != nil {
 		return productEntity.Product{}, ers.ErrorAddTrace(err)
