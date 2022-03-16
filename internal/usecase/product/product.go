@@ -22,12 +22,13 @@ type productResource interface {
 }
 
 type bidResource interface {
-	Bid(ctx context.Context, bid bid.Bid, product productEntity.Product) (bid.Bid, error)
+	Bid(ctx context.Context, bid bid.Bid, product productEntity.Product) (int64, error)
 	GetHighestBidAmountByProduct(ctx context.Context, product productEntity.Product) (int64, error)
 	AntiDoubleRequest(ctx context.Context, userID string) error
 	ReleaseAntiDoubleRequest(ctx context.Context, userID string) error
 	GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid, error)
 	SetHighestBidAmountByProductDB(ctx context.Context, bid bid.Bid) error
+	PublishBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error
 }
 
 type gopayResource interface {
@@ -132,12 +133,19 @@ func (uc *UseCase) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
 
 	go uc.gopayRsc.BookSaldo(ctx, bidReq.UserID, bidReq.BidID, bidReq.Amount)
 
-	bidRes, err := uc.bidRsc.Bid(ctx, bidReq, product)
+	count, err := uc.bidRsc.Bid(ctx, bidReq, product)
 	if err != nil {
 		return bid.Bid{}, ers.ErrorAddTrace(err)
 	}
 
+	go uc.bidRsc.PublishBidFRDB(ctx, bid.BidFirebaseRDB{
+		ProductID:    bidReq.BidID,
+		UserID:       bidReq.UserID,
+		CurrentPrice: bidReq.Amount,
+		BidderCount:  count,
+	})
+
 	go uc.bidRsc.SetHighestBidAmountByProductDB(ctx, bidReq)
 
-	return bidRes, nil
+	return bidReq, nil
 }
