@@ -129,13 +129,12 @@ func (uc *UseCase) GetAll(ctx context.Context, userID string, role string) (prod
 }
 
 func (uc *UseCase) FinishBid(ctx context.Context, product productEntity.Product, userID string) error {
-	highestBid, err := uc.bidRsc.GetHighestBidAmountByProduct(ctx, product)
-	if err != nil {
-		return ers.ErrorAddTrace(err)
-	}
-
 	if time.Now().Unix() >= product.EndTime {
 		//err := uc.productRsc.Update(ctx, product)
+		highestBid, err := uc.bidRsc.GetHighestBidAmountByProduct(ctx, product)
+		if err != nil {
+			return ers.ErrorAddTrace(err)
+		}
 		//if err != nil {
 		//	return ers.ErrorAddTrace(err)
 		//}
