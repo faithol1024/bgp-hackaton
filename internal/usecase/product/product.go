@@ -15,6 +15,7 @@ import (
 
 type productResource interface {
 	Create(ctx context.Context, product productEntity.Product) error
+	Update(ctx context.Context, req productEntity.Product) error
 	GetByID(ctx context.Context, ID string) (productEntity.Product, error)
 	GetAll(ctx context.Context) ([]productEntity.Product, error)
 	GetAllBySeller(ctx context.Context, userID string) ([]productEntity.Product, error)
@@ -95,6 +96,11 @@ func (uc *UseCase) GetByID(ctx context.Context, ID string) (productEntity.Produc
 		productRes.UserName = userRes.UserName
 	}
 
+	err = uc.FinishBid(ctx, productRes, userRes.UserID)
+	if err != nil {
+		return productEntity.Product{}, ers.ErrorAddTrace(err)
+	}
+
 	return productRes, nil
 }
 
@@ -120,6 +126,27 @@ func (uc *UseCase) GetAll(ctx context.Context, userID string, role string) (prod
 	}
 
 	return products, nil
+}
+
+func (uc *UseCase) FinishBid(ctx context.Context, product productEntity.Product, userID string) error {
+	highestBid, err := uc.bidRsc.GetHighestBidAmountByProduct(ctx, product)
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	if time.Now().Unix() >= product.EndTime {
+		//err := uc.productRsc.Update(ctx, product)
+		//if err != nil {
+		//	return ers.ErrorAddTrace(err)
+		//}
+		go uc.bidRsc.PublishBidFRDB(ctx, bid.BidFirebaseRDB{
+			ProductID:    product.ProductID,
+			UserID:       userID,
+			CurrentPrice: highestBid,
+			BidderCount:  product.TotalBidder,
+		})
+	}
+	return nil
 }
 
 func (uc *UseCase) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {

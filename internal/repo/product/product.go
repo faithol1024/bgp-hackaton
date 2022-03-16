@@ -46,6 +46,46 @@ func (r *Repo) Create(ctx context.Context, product product.Product) error {
 	return nil
 }
 
+func (r *Repo) Update(ctx context.Context, req product.Product) error {
+	av, err := dynamodbattribute.MarshalMap(req)
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	type ExpressionAttr struct {
+		HighestBidID string `json:":highest_bid_id"`
+	}
+
+	expressionAttr, err := dynamodbattribute.MarshalMap(ExpressionAttr{
+		HighestBidID: req.HighestBidID})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	key, err := dynamodbattribute.MarshalMap(product.Product{
+		ProductID: req.ProductID,
+	})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	_, err = r.db.UpdateItem(&dynamodb.UpdateItemInput{
+		Key:                       key,
+		TableName:                 aws.String(productTable),
+		UpdateExpression:          aws.String("set highest_bid_id = :highest_bid_id"),
+		ExpressionAttributeValues: expressionAttr,
+	})
+	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(productTable),
+	})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	return nil
+}
+
 func (r *Repo) GetByID(ctx context.Context, ID string) (product.Product, error) {
 	result, err := r.db.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(productTable),
