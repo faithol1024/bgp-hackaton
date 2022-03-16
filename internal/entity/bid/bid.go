@@ -12,6 +12,13 @@ type Bid struct {
 	PlacedTime int64  `json:"placed_time"`
 }
 
+type BidFirebaseRDB struct {
+	ProductID    string `json:"product_id"`
+	UserID       string `json:"user_id"`
+	CurrentPrice int64  `json:"current_price"`
+	BidderCount  int64  `json:"bidder_count"`
+}
+
 func (b *Bid) Validate() error {
 	if b.UserID == "" {
 		return errors.New("Invalid User")

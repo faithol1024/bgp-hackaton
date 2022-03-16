@@ -12,7 +12,7 @@ import (
 )
 
 type bidUseCase interface {
-	UpdateBidFRDB(ctx context.Context, bid bid.Bid) error
+	UpdateBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error
 }
 
 type Handler struct {
@@ -39,7 +39,12 @@ func (h *Handler) PublishBidFRDB(w http.ResponseWriter, r *http.Request) {
 
 	// call the usecase
 	// for test
-	err := h.BidUC.UpdateBidFRDB(ctx, bid.Bid{BidID: "1", Amount: 100})
+	err := h.BidUC.UpdateBidFRDB(ctx, bid.BidFirebaseRDB{
+		ProductID:    "af447cba-6220-4092-a46a-ceaf52df16d9",
+		UserID:       "1cbe7199-646f-4d45-80b9-0b071f538791",
+		CurrentPrice: 100000,
+		BidderCount:  1,
+	})
 	if err != nil {
 		log.Error("[bid.PublishBidFRDB] error from PublishBidFRDB: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get bid`)
