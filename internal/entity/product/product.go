@@ -9,6 +9,7 @@ import (
 type Product struct {
 	ProductID    string `json:"product_id"`
 	UserID       string `json:"user_id"`
+	UserName     string `json:"user_name"`
 	Name         string `json:"name"`
 	ImageURL     string `json:"image_url"`
 	Description  string `json:"description"`
