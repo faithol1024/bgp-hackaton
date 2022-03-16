@@ -50,10 +50,10 @@ func (b *Bid) ValidateBidEligibility(balance, multiplier, highestBid int64) erro
 	return nil
 }
 
-func GetListProductIDFromListBid(bids []Bid) []string {
-	var res []string
+func GetListProductIDFromListBid(bids []Bid) map[string]bool {
+	res := map[string]bool{}
 	for _, bid := range bids {
-		res = append(res, bid.ProductID)
+		res[bid.ProductID] = true
 	}
 	return res
 }

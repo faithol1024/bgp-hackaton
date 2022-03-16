@@ -18,7 +18,7 @@ type productResource interface {
 	GetByID(ctx context.Context, ID string) (productEntity.Product, error)
 	GetAll(ctx context.Context) ([]productEntity.Product, error)
 	GetAllBySeller(ctx context.Context, userID string) ([]productEntity.Product, error)
-	GetAllByBuyer(ctx context.Context, userProductIDs []string) ([]productEntity.Product, error)
+	GetAllByBuyer(ctx context.Context, userProductIDs map[string]bool) ([]productEntity.Product, error)
 }
 
 type bidResource interface {
