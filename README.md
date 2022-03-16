@@ -11,19 +11,7 @@
 3. Run `Go mod tidy`
 4. Run `make run-http`
 
-because of this repo using aws database (dynamoDB), we need to specify the aws config and credentials.
-1. create file `~/.aws/credentials`
-```
-[default]
-aws_access_key_id = AKIART56DJS6KDC3BQ5W
-aws_secret_access_key = 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
-```
-2. create file `~/.aws/config`
-```
-[default]
-region=ap-southeast-1
-output=json
-```
+Because of this repo using aws database (dynamoDB), we need to specify the aws config and credentials. Please reach us for the credential to run in local 🙏
 
 
 ### Cloud
