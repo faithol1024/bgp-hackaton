@@ -16,7 +16,7 @@ import (
 )
 
 type productUseCase interface {
-	Create(ctx context.Context, product productEntity.Product) error
+	Create(ctx context.Context, product productEntity.Product) (productEntity.Product, error)
 	GetByID(ctx context.Context, id string) (productEntity.Product, error)
 	GetAll(ctx context.Context, userID string, role string) ([]productEntity.Product, error)
 	Bid(ctx context.Context, bid bid.Bid) (bid.Bid, error)
@@ -36,6 +36,10 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// params checking
 	productID := chi.URLParam(r, "product_id")
 	if productID == "" {
@@ -48,7 +52,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	product, err := h.ProductUC.GetByID(ctx, productID)
 	if err != nil {
 		log.Error("[product.GetByID] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get product by id`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -61,11 +65,15 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// call the usecase
 	products, err := h.ProductUC.GetAll(ctx, "", "")
 	if err != nil {
 		log.Error("[product.GetAll] error from GetAll: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get all product`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -78,6 +86,10 @@ func (h *Handler) GetAllBySeller(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// params checking
 	userID := chi.URLParam(r, "user_id")
 	if userID == "" {
@@ -87,10 +99,10 @@ func (h *Handler) GetAllBySeller(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleBuyer)
+	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleSeller)
 	if err != nil {
 		log.Error("[product.GetAllBySeller] error from GetAllBySeller: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get seller product`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -103,6 +115,10 @@ func (h *Handler) GetAllByBuyer(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// params checking
 	userID := chi.URLParam(r, "user_id")
 	if userID == "" {
@@ -112,10 +128,10 @@ func (h *Handler) GetAllByBuyer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleSeller)
+	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleBuyer)
 	if err != nil {
 		log.Error("[product.GetAllByBuyer] error from GetAllByBuyer: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get buyer product`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -128,6 +144,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	var product productEntity.Product
 
 	// params decode
@@ -138,7 +158,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = product.Validate()
+	err = product.ValidateInput()
 	if err != nil {
 		log.Error("[product.Create] Invalid param")
 		w.WriteHeader(http.StatusBadRequest)
@@ -146,11 +166,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	product.Status = productEntity.StatusNew
-	err = h.ProductUC.Create(ctx, product)
+	product, err = h.ProductUC.Create(ctx, product)
 	if err != nil {
 		log.Error("[product.Create] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `gaboleh bikin product yee`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -161,8 +180,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Bid(w http.ResponseWriter, r *http.Request) {
-	// span, ctx := tracer.StartFromRequest(r)
-	// defer span.Finish()
+	span, ctx := tracer.StartFromRequest(r)
+	defer span.Finish()
+
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	var bid bid.Bid
 
@@ -181,18 +204,16 @@ func (h *Handler) Bid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// // call the usecase
-	// gopay, err := h.GopayUC.GetByID(ctx, user_id)
-	// if err != nil {
-	// 	log.Error("[product.Bid] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-	// 	response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get gopay`)
-	// 	return
-	// }
-
-	bid.BidID = "adasds"
+	// call the usecase
+	bidRes, err := h.ProductUC.Bid(ctx, bid)
+	if err != nil {
+		log.Error("[product.Bid] error from Bid: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	// send the response
-	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, bid); err != nil {
+	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, bidRes); err != nil {
 		log.Error("[product.Bid] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	}
 }

@@ -32,6 +32,10 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// params checking
 	userID := chi.URLParam(r, "user_id")
 	if userID == "" {
@@ -44,7 +48,7 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	user, err := h.UserUC.GetByID(ctx, userID)
 	if err != nil {
 		log.Error("[user.GetByUserID] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get user`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -57,6 +61,10 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
+
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	var user user.User
 
@@ -79,7 +87,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	user, err = h.UserUC.Create(ctx, user)
 	if err != nil {
 		log.Error("[user.Create] error from Create: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get user`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
