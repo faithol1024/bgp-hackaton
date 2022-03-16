@@ -77,13 +77,17 @@ func (r *Repo) GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid,
 	return bids, nil
 }
 
-func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid, product product.Product) (bid.Bid, error) {
+func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid, product product.Product) (int64, error) {
 	err := r.SetHighestBidAmountByProductRedis(ctx, bidReq, product)
 	if err != nil {
-		return bid.Bid{}, ers.ErrorAddTrace(err)
+		return 0, ers.ErrorAddTrace(err)
+	}
+	count, err := r.IncrementTotalBidder(ctx, bidReq.ProductID)
+	if err != nil {
+		log.Error(errors.New("Fail to increment total bidder"))
 	}
 
-	return bidReq, nil
+	return count, nil
 }
 
 func (r *Repo) AntiDoubleRequest(ctx context.Context, userID string) error {
@@ -136,6 +140,16 @@ func (r *Repo) SetHighestBidAmountByProductRedis(ctx context.Context, bid bid.Bi
 	}
 
 	return nil
+}
+
+func (r *Repo) IncrementTotalBidder(ctx context.Context, productID string) (int64, error) {
+	key := constructTotalBidderKey(productID)
+	count, err := r.cache.Incr(key)
+	if err != nil {
+		return 0, ers.ErrorAddTrace(err)
+	}
+
+	return count, nil
 }
 
 func (r *Repo) SetHighestBidAmountByProductDB(ctx context.Context, bid bid.Bid) error {
@@ -193,6 +207,10 @@ func (r *Repo) GetHighestBidAmountByProductDB(ctx context.Context, productID str
 
 func constructHighestBidAmount(productID string) string {
 	return fmt.Sprintf("bid:highest:%s", productID)
+}
+
+func constructTotalBidderKey(productID string) string {
+	return fmt.Sprintf("product:total_bid:%s", productID)
 }
 
 func (r *Repo) ReleaseAntiDoubleRequest(ctx context.Context, userID string) error {
