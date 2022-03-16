@@ -112,7 +112,7 @@ func (h *Handler) GetAllByBuyer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleSeller)
+	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleBuyer)
 	if err != nil {
 		log.Error("[product.GetAllByBuyer] error from GetAllByBuyer: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get buyer product`)

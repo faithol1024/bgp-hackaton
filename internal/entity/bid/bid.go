@@ -49,3 +49,11 @@ func (b *Bid) ValidateBidEligibility(balance, multiplier, highestBid int64) erro
 	}
 	return nil
 }
+
+func GetListProductIDFromListBid(bids []Bid) []string {
+	var res []string
+	for _, bid := range bids {
+		res = append(res, bid.ProductID)
+	}
+	return res
+}

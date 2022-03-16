@@ -3,9 +3,8 @@ package bid
 import (
 	"context"
 	"errors"
-	"fmt"
-
 	database "firebase.google.com/go/v4/db"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -43,6 +42,36 @@ func (r *Repo) PublishBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error
 		return err
 	}
 	return nil
+}
+
+func (r *Repo) GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid, error) {
+	filt := expression.Name("user_id").Equal(expression.Value(userID))
+
+	expr, err := expression.NewBuilder().WithFilter(filt).Build()
+	if err != nil {
+		return []bid.Bid{}, ers.ErrorAddTrace(ers.ErrorAddTrace(err))
+	}
+
+	// Build the query input parameters
+	params := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(bidTable),
+	}
+	result, err := r.db.Scan(params)
+	if err != nil {
+		return []bid.Bid{}, ers.ErrorAddTrace(err)
+	}
+
+	bids := []bid.Bid{}
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &bids)
+	if err != nil {
+		return []bid.Bid{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+	}
+
+	return bids, nil
 }
 
 func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
