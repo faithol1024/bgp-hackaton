@@ -31,6 +31,10 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// params checking
 	userID := chi.URLParam(r, "user_id")
 	if userID == "" {
@@ -56,6 +60,10 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetAllHistoryByUserID(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
+
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	// params checking
 	userID := chi.URLParam(r, "user_id")
