@@ -93,7 +93,6 @@ func (r *Repo) CreateHistory(ctx context.Context, req gopay.GopayHistory) (gopay
 	return req, nil
 }
 
-//TODO: still return 1 row
 func (r *Repo) GetAllHistoryByUserID(ctx context.Context, userID string) ([]gopay.GopayHistory, error) {
 	filt := expression.Name("user_id").Equal(expression.Value(userID))
 
