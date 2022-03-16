@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"github.com/faithol1024/bgp-hackaton/internal/entity/bid"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/product"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
 	"github.com/tokopedia/tdk/go/redis"
@@ -28,7 +27,7 @@ func New(db *dynamodb.DynamoDB, cache *redis.Client) *Repo {
 
 const (
 	productTable     = "product"
-	productAttribute = "product_id,user_id,name,image_url,description,start_bid,multiple_bid,start_time,end_time,highest_bid_id,total_bidder,status"
+	productAttribute = "product_id,user_id,#product_name,image_url,description,start_bid,multiple_bid,start_time,end_time,highest_bid_id,total_bidder,#product_status"
 )
 
 func (r *Repo) Create(ctx context.Context, product product.Product) error {
@@ -53,10 +52,11 @@ func (r *Repo) GetByID(ctx context.Context, ID string) (product.Product, error) 
 		TableName: aws.String(productTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"product_id": {
-				N: aws.String(ID),
+				S: aws.String(ID),
 			},
 		},
-		ProjectionExpression: aws.String(productAttribute),
+		ExpressionAttributeNames: map[string]*string{"#product_status": aws.String("status"), "#product_name": aws.String("name")},
+		ProjectionExpression:     aws.String(productAttribute),
 	})
 	if err != nil {
 		return product.Product{}, ers.ErrorAddTrace(err)
@@ -106,7 +106,7 @@ func (r *Repo) GetAll(ctx context.Context) ([]product.Product, error) {
 
 }
 func (r *Repo) GetAllBySeller(ctx context.Context, userID string) ([]product.Product, error) {
-	filt := expression.Name("user_id").Equal(expression.Value(product.StatusNew))
+	filt := expression.Name("user_id").Equal(expression.Value(userID))
 
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
@@ -138,7 +138,4 @@ func (r *Repo) GetAllBySeller(ctx context.Context, userID string) ([]product.Pro
 func (r *Repo) GetAllByBuyer(ctx context.Context, userID string) ([]product.Product, error) {
 	return []product.Product{}, nil
 
-}
-func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
-	return bid.Bid{}, nil
 }
