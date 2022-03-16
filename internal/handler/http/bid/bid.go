@@ -51,7 +51,7 @@ func (h *Handler) PublishBidFRDB(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Error("[bid.PublishBidFRDB] error from PublishBidFRDB: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get bid`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 

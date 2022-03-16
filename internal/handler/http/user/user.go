@@ -48,7 +48,7 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	user, err := h.UserUC.GetByID(ctx, userID)
 	if err != nil {
 		log.Error("[user.GetByUserID] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get user`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -87,7 +87,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	user, err = h.UserUC.Create(ctx, user)
 	if err != nil {
 		log.Error("[user.Create] error from Create: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get user`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
