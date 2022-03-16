@@ -2,9 +2,12 @@ package user
 
 import (
 	"context"
-
+	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/user"
+	ers "github.com/faithol1024/bgp-hackaton/lib/error"
 	"github.com/tokopedia/tdk/go/redis"
 )
 
@@ -22,87 +25,49 @@ func New(db *dynamodb.DynamoDB, cache *redis.Client) *Repo {
 
 const (
 	userTable      = "user"
-	userAttributes = "user_id,name,email"
+	userAttributes = "user_id,user_name,email"
 )
 
-func (r *Repo) GetByUserID(ctx context.Context, userID string) (user.User, error) {
-	return r.GetByUserIDDB(ctx, userID)
-}
+func (r *Repo) GetByID(ctx context.Context, id string) (user.User, error) {
+	result, err := r.db.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(userTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"user_id": {
+				S: aws.String(id),
+			},
+		},
+		ProjectionExpression: aws.String(userAttributes),
+	})
+	if err != nil {
+		return user.User{}, ers.ErrorAddTrace(err)
+	}
+	if result.Item == nil {
+		return user.User{}, ers.ErrorAddTrace(fmt.Errorf("User %s Not Found", id))
+	}
 
-func (r *Repo) GetByUserIDDB(ctx context.Context, userID string) (user.User, error) {
-	return user.User{
-		UserID: "1",
-		Name:   "angga",
-		Email:  "angga@aa.aa",
-	}, nil
-	//result, err := r.db.GetItem(&dynamodb.GetItemInput{
-	//	TableName: aws.String(userTable),
-	//	Key: map[string]*dynamodb.AttributeValue{
-	//		"user_id": {
-	//			N: aws.String(util.Int64ToString(userID)),
-	//		},
-	//	},
-	//	ProjectionExpression: aws.String(userAttributes),
-	//})
-	//if err != nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(err)
-	//}
-	//if result.Item == nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(fmt.Errorf("Table %s not found", userTable))
-	//}
-	//
-	//userSaldo := user.GopaySaldo{}
-	//
-	//err = dynamodbattribute.UnmarshalMap(result.Item, &userSaldo)
-	//if err != nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
-	//}
-	//
-	//err = userSaldo.Validate()
-	//if err != nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(err)
-	//}
-	//
-	//return userSaldo, nil
+	userResult := user.User{}
+
+	err = dynamodbattribute.UnmarshalMap(result.Item, &userResult)
+	if err != nil {
+		return user.User{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+	}
+
+	return userResult, nil
 }
 
 func (r *Repo) Create(ctx context.Context, req user.User) (user.User, error) {
-	return r.CreateDB(ctx, req)
-}
+	av, err := dynamodbattribute.MarshalMap(req)
+	if err != nil {
+		return user.User{}, ers.ErrorAddTrace(err)
+	}
 
-func (r *Repo) CreateDB(ctx context.Context, req user.User) (user.User, error) {
-	return user.User{
-		UserID: "1",
-		Name:   "angga",
-		Email:  "angga@aa.aa",
-	}, nil
-	//result, err := r.db.GetItem(&dynamodb.GetItemInput{
-	//	TableName: aws.String(userTable),
-	//	Key: map[string]*dynamodb.AttributeValue{
-	//		"user_id": {
-	//			N: aws.String(util.Int64ToString(userID)),
-	//		},
-	//	},
-	//	ProjectionExpression: aws.String(userAttributes),
-	//})
-	//if err != nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(err)
-	//}
-	//if result.Item == nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(fmt.Errorf("Table %s not found", userTable))
-	//}
-	//
-	//userSaldo := user.GopaySaldo{}
-	//
-	//err = dynamodbattribute.UnmarshalMap(result.Item, &userSaldo)
-	//if err != nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
-	//}
-	//
-	//err = userSaldo.Validate()
-	//if err != nil {
-	//	return user.GopaySaldo{}, ers.ErrorAddTrace(err)
-	//}
-	//
-	//return userSaldo, nil
+	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(userTable),
+	})
+	if err != nil {
+		return user.User{}, ers.ErrorAddTrace(err)
+	}
+
+	return req, nil
 }

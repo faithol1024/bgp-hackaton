@@ -14,7 +14,7 @@ import (
 
 type gopayUseCase interface {
 	GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error)
-	GetHistoryByUserID(ctx context.Context, userID string) ([]gopay.GopayHistory, error)
+	GetAllHistoryByUserID(ctx context.Context, userID string) ([]gopay.GopayHistory, error)
 }
 
 type Handler struct {
@@ -53,28 +53,28 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) GetHistoryByUserID(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllHistoryByUserID(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
 	// params checking
 	userID := chi.URLParam(r, "user_id")
 	if userID == "" {
-		log.Error("[user.GetHistoryByUserID] error Invalid param")
+		log.Error("[user.GetAllHistoryByUserID] error Invalid param")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// call the usecase
-	gopayHistories, err := h.GopayUC.GetHistoryByUserID(ctx, userID)
+	gopayHistories, err := h.GopayUC.GetAllHistoryByUserID(ctx, userID)
 	if err != nil {
-		log.Error("[gopay.GetHistoryByUserID] error from GetHistoryByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		log.Error("[gopay.GetAllHistoryByUserID] error from GetAllHistoryByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get gopay history`)
 		return
 	}
 
 	// send the response
 	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, gopayHistories); err != nil {
-		log.Error("[gopay.GetHistoryByUserID] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		log.Error("[gopay.GetAllHistoryByUserID] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	}
 }

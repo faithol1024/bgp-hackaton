@@ -3,9 +3,9 @@ package user
 import "errors"
 
 type User struct {
-	UserID string `json:"user_id"`
-	Name   string `json:"name"`
-	Email  string `json:"email"`
+	UserID   string `json:"user_id"`
+	UserName string `json:"user_name"`
+	Email    string `json:"email"`
 }
 
 const (
@@ -14,8 +14,8 @@ const (
 )
 
 func (u *User) Validate() error {
-	if u.Name == "" {
-		return errors.New("Invalid Name")
+	if u.UserName == "" {
+		return errors.New("Invalid UserName")
 	}
 	if u.Email == "" {
 		return errors.New("Invalid Email")

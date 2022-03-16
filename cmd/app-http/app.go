@@ -46,10 +46,12 @@ func startApp(cfg *config.Config) error {
 	productRepo := productrepo.New(dyna, redis)
 	bidRepo := bidrepo.New(dbrf)
 
+	gopayUC := gopayusecase.New(gopayRepo)
+
 	// init routers
 	router := newRoutes(RouteHandlers{
-		user:    userhandler.New(userusecase.New(userRepo)),
-		gopay:   gopayhandler.New(gopayusecase.New(gopayRepo)),
+		user:    userhandler.New(userusecase.New(userRepo, gopayUC)),
+		gopay:   gopayhandler.New(gopayUC),
 		bid:     bidhandler.New(bidusecase.New(bidRepo)),
 		product: producthandler.New(product.New(productRepo)),
 	})

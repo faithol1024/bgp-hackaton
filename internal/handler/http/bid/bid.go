@@ -32,7 +32,7 @@ func (h *Handler) PublishBidFRDB(w http.ResponseWriter, r *http.Request) {
 	//// params checking
 	//user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
 	//if err != nil {
-	//	log.Error("[bid.GetByUserID] error from Parse Param: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+	//	log.Error("[bid.GetByID] error from Parse Param: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	//	w.WriteHeader(http.StatusBadRequest)
 	//	return
 	//}
@@ -48,6 +48,6 @@ func (h *Handler) PublishBidFRDB(w http.ResponseWriter, r *http.Request) {
 
 	// send the response
 	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, nil); err != nil {
-		log.Error("[bid.GetByUserID] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		log.Error("[bid.PublishBidFRDB] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	}
 }
