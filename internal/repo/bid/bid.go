@@ -18,8 +18,8 @@ func New(frdb *database.Ref) *Repo {
 	}
 }
 
-func (r *Repo) PublishBidFRDB(ctx context.Context, bid bid.Bid) error {
-	err := r.frdb.Child(bid.BidID).Set(ctx, bid)
+func (r *Repo) PublishBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error {
+	err := r.frdb.Child(bid.ProductID).Set(ctx, bid)
 	if err != nil {
 		log.Error(err)
 		return err

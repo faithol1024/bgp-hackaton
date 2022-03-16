@@ -7,7 +7,7 @@ import (
 )
 
 type bidResource interface {
-	PublishBidFRDB(ctx context.Context, bid bid.Bid) error
+	PublishBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error
 }
 
 type UseCase struct {
@@ -20,6 +20,6 @@ func New(bidResource bidResource) *UseCase {
 	}
 }
 
-func (uc *UseCase) UpdateBidFRDB(ctx context.Context, bid bid.Bid) error {
+func (uc *UseCase) UpdateBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error {
 	return uc.bidRsc.PublishBidFRDB(ctx, bid)
 }
