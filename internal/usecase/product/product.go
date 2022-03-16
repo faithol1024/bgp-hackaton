@@ -30,6 +30,7 @@ type bidResource interface {
 	GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid, error)
 	SetHighestBidAmountByProductDB(ctx context.Context, bid bid.Bid) error
 	PublishBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error
+	ReleaseBookedSaldo(ctx context.Context, productID string) error
 }
 
 type gopayResource interface {
@@ -146,7 +147,8 @@ func (uc *UseCase) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
 
 	bidReq.BidID = util.GetStringUUID()
 	bidReq.PlacedTime = time.Now().Unix()
-	err = bidReq.ValidateBidEligibility(gopay.AmountIDR, product.MultipleBid, highestBid)
+	bidReq.State = bid.StateBooked
+	err = bidReq.ValidateBidEligibility(gopay.AmountIDR, product.MultipleBid, highestBid, product.EndTime)
 	if err != nil {
 		return bid.Bid{}, ers.ErrorAddTrace(err)
 	}
@@ -159,11 +161,13 @@ func (uc *UseCase) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
 	}
 
 	go uc.bidRsc.PublishBidFRDB(ctx, bid.BidFirebaseRDB{
-		ProductID:    bidReq.BidID,
+		ProductID:    bidReq.ProductID,
 		UserID:       bidReq.UserID,
 		CurrentPrice: bidReq.Amount,
 		BidderCount:  count,
 	})
+
+	go uc.bidRsc.ReleaseBookedSaldo(ctx, bidReq.ProductID)
 
 	go uc.bidRsc.SetHighestBidAmountByProductDB(ctx, bidReq)
 

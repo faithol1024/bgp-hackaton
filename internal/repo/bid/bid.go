@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/bid"
+	bidEntity "github.com/faithol1024/bgp-hackaton/internal/entity/bid"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/product"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
 	"github.com/faithol1024/bgp-hackaton/lib/util"
@@ -38,7 +39,7 @@ func New(frdb *database.Ref, cache *redis.Client, db *dynamodb.DynamoDB) *Repo {
 	}
 }
 
-func (r *Repo) PublishBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error {
+func (r *Repo) PublishBidFRDB(ctx context.Context, bid bidEntity.BidFirebaseRDB) error {
 	err := r.frdb.Child(bid.ProductID).Set(ctx, bid)
 	if err != nil {
 		log.Error(err)
@@ -47,12 +48,12 @@ func (r *Repo) PublishBidFRDB(ctx context.Context, bid bid.BidFirebaseRDB) error
 	return nil
 }
 
-func (r *Repo) GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid, error) {
+func (r *Repo) GetAllBidByUserID(ctx context.Context, userID string) ([]bidEntity.Bid, error) {
 	filt := expression.Name("user_id").Equal(expression.Value(userID))
 
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
-		return []bid.Bid{}, ers.ErrorAddTrace(ers.ErrorAddTrace(err))
+		return []bidEntity.Bid{}, ers.ErrorAddTrace(ers.ErrorAddTrace(err))
 	}
 
 	// Build the query input parameters
@@ -65,13 +66,13 @@ func (r *Repo) GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid,
 	}
 	result, err := r.db.Scan(params)
 	if err != nil {
-		return []bid.Bid{}, ers.ErrorAddTrace(err)
+		return []bidEntity.Bid{}, ers.ErrorAddTrace(err)
 	}
 
-	bids := []bid.Bid{}
+	bids := []bidEntity.Bid{}
 	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &bids)
 	if err != nil {
-		return []bid.Bid{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+		return []bidEntity.Bid{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
 	}
 
 	return bids, nil
@@ -131,7 +132,7 @@ func (r *Repo) GetHighestBidAmountByProductRedis(ctx context.Context, productID 
 	return util.StrintToInt64(res), nil
 }
 
-func (r *Repo) SetHighestBidAmountByProductRedis(ctx context.Context, bid bid.Bid, product product.Product) error {
+func (r *Repo) SetHighestBidAmountByProductRedis(ctx context.Context, bid bidEntity.Bid, product product.Product) error {
 	key := constructHighestBidAmount(bid.ProductID)
 	ttl := product.EndTime - time.Now().Unix()
 	_, err := r.cache.SetEX(key, bid.Amount, int(ttl))
@@ -152,7 +153,7 @@ func (r *Repo) IncrementTotalBidder(ctx context.Context, productID string) (int6
 	return count, nil
 }
 
-func (r *Repo) SetHighestBidAmountByProductDB(ctx context.Context, bid bid.Bid) error {
+func (r *Repo) SetHighestBidAmountByProductDB(ctx context.Context, bid bidEntity.Bid) error {
 	av, err := dynamodbattribute.MarshalMap(bid)
 	if err != nil {
 		return ers.ErrorAddTrace(err)
@@ -169,13 +170,13 @@ func (r *Repo) SetHighestBidAmountByProductDB(ctx context.Context, bid bid.Bid) 
 	return nil
 }
 
-func (r *Repo) GetHighestBidAmountByProductDB(ctx context.Context, productID string) (bid.Bid, error) {
+func (r *Repo) GetHighestBidAmountByProductDB(ctx context.Context, productID string) (bidEntity.Bid, error) {
 	keyCondition := expression.KeyEqual(expression.Key("product_id"), expression.Value(productID))
 
 	proj := expression.NamesList(expression.Name("amount"))
 	expr, err := expression.NewBuilder().WithProjection(proj).WithKeyCondition(keyCondition).Build()
 	if err != nil {
-		return bid.Bid{}, ers.ErrorAddTrace(err)
+		return bidEntity.Bid{}, ers.ErrorAddTrace(err)
 	}
 
 	result, err := r.db.Query(&dynamodb.QueryInput{
@@ -189,20 +190,115 @@ func (r *Repo) GetHighestBidAmountByProductDB(ctx context.Context, productID str
 		ScanIndexForward:          aws.Bool(false),
 	})
 	if err != nil {
-		return bid.Bid{}, ers.ErrorAddTrace(err)
+		return bidEntity.Bid{}, ers.ErrorAddTrace(err)
 	}
 	if len(result.Items) <= 0 {
-		return bid.Bid{}, nil
+		return bidEntity.Bid{}, nil
 	}
 
-	bidResult := bid.Bid{}
+	bidResult := bidEntity.Bid{}
 
 	err = dynamodbattribute.UnmarshalMap(result.Items[0], &bidResult)
 	if err != nil {
-		return bid.Bid{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+		return bidEntity.Bid{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
 	}
 
 	return bidResult, nil
+}
+
+func (r *Repo) ReleaseBookedSaldo(ctx context.Context, productID string) error {
+	redisRes, err := r.GetHighestBidAmountByProductRedis(ctx, productID)
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	keyCondition := expression.KeyEqual(expression.Key("product_id"), expression.Value(productID))
+	filt := expression.Name("amount").LessThan(expression.Value(redisRes))
+
+	proj := expression.NamesList(expression.Name("amount"))
+	expr, err := expression.NewBuilder().WithProjection(proj).WithKeyCondition(keyCondition).WithFilter(filt).Build()
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	result, err := r.db.Query(&dynamodb.QueryInput{
+		KeyConditionExpression:    expr.KeyCondition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(bidTable),
+		Limit:                     aws.Int64(1),
+		ScanIndexForward:          aws.Bool(false),
+	})
+	if err != nil {
+		log.Error(err)
+		return ers.ErrorAddTrace(err)
+	}
+	if len(result.Items) <= 0 {
+		return nil
+	}
+
+	for _, item := range result.Items {
+		var bid bidEntity.Bid
+		err = dynamodbattribute.UnmarshalMap(item, &bid)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		// dynamodb doesn't support bulk update
+		// probably because they charge based on insert/update/get traffic. lol
+		// pantesan om bezos tajir
+		err := r.UpdateBidState(ctx, bid.BidID, bidEntity.StateReturned)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+	}
+
+	return nil
+
+}
+
+func (r *Repo) UpdateBidState(ctx context.Context, bidID, state string) error {
+	// type ExpressionAttr struct {
+	// 	State string `json:":val"`
+	// }
+
+	// expressionAttr, err := dynamodbattribute.MarshalMap(ExpressionAttr{State: state})
+	// if err != nil {
+	// 	return ers.ErrorAddTrace(err)
+	// }
+
+	// key, err := dynamodbattribute.MarshalMap(gopay.GopaySaldo{
+	// 	UserID: userID,
+	// })
+	// if err != nil {
+	// 	return ers.ErrorAddTrace(err)
+	// }
+
+	// gopayHistory := gopay.GopayHistory{
+	// 	GopayHistoryID: util.GetStringUUID(),
+	// 	UserID:         userID,
+	// 	BidID:          bidID,
+	// }
+
+	// _, err = r.CreateHistory(ctx, gopayHistory)
+	// if err != nil {
+	// 	return ers.ErrorAddTrace(err)
+	// }
+
+	// _, err = r.db.UpdateItem(&dynamodb.UpdateItemInput{
+	// 	Key:                       key,
+	// 	TableName:                 aws.String(bidTable),
+	// 	UpdateExpression:          aws.String("set state = :val"),
+	// 	ExpressionAttributeValues: expressionAttr,
+	// })
+	// if err != nil {
+	// 	return ers.ErrorAddTrace(err)
+	// }
+
+	return nil
 }
 
 func constructHighestBidAmount(productID string) string {

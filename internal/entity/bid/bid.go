@@ -10,6 +10,7 @@ type Bid struct {
 	UserID     string `json:"user_id"`
 	Amount     int64  `json:"amount"`
 	PlacedTime int64  `json:"placed_time"`
+	State      string `json:"string"`
 }
 
 type BidFirebaseRDB struct {
@@ -17,7 +18,14 @@ type BidFirebaseRDB struct {
 	UserID       string `json:"user_id"`
 	CurrentPrice int64  `json:"current_price"`
 	BidderCount  int64  `json:"bidder_count"`
+	Finished     bool   `json:"finished"`
 }
+
+const (
+	StateBooked   = "book"
+	StateLost     = "lost"
+	StateReturned = "returned"
+)
 
 func (b *Bid) Validate() error {
 	if b.UserID == "" {
@@ -37,7 +45,7 @@ func (b *Bid) ValidateMultiplierAmount() error {
 	return nil
 }
 
-func (b *Bid) ValidateBidEligibility(balance, multiplier, highestBid int64) error {
+func (b *Bid) ValidateBidEligibility(balance, multiplier, highestBid, endTime int64) error {
 	if b.Amount%multiplier != 0 {
 		return errors.New("Invalid Multiplier Amount")
 	}
@@ -46,6 +54,9 @@ func (b *Bid) ValidateBidEligibility(balance, multiplier, highestBid int64) erro
 	}
 	if b.Amount <= highestBid {
 		return errors.New("Put Higher Amount, you poor guy")
+	}
+	if b.PlacedTime > endTime {
+		return errors.New("Too late bro")
 	}
 	return nil
 }

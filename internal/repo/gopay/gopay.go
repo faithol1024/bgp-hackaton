@@ -115,6 +115,7 @@ func (r *Repo) BookSaldo(ctx context.Context, userID, bidID string, amount int64
 		ExpressionAttributeValues: expressionAttr,
 	})
 	if err != nil {
+		//rollback if fail to decrement saldo
 		go r.DeleteHistory(ctx, gopayHistory)
 		return ers.ErrorAddTrace(err)
 	}
