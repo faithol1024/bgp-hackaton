@@ -1,6 +1,7 @@
 package ers
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/faithol1024/bgp-hackaton/lib/util"
@@ -51,4 +52,25 @@ func ErrorGetTrace(err interface{}) []string {
 	}
 
 	return []string{}
+}
+
+func IsMatchError(err1 error, err2 error) bool {
+	if err1 == nil && err2 == nil {
+		return true
+	}
+
+	if err1 == nil {
+		err1 = errors.New("nil")
+	}
+
+	if err2 == nil {
+		err2 = errors.New("nil")
+	}
+
+	// for now comparing the message only, because if comparing errors will panic
+	if err1.Error() == err2.Error() {
+		return true
+	}
+
+	return false
 }
