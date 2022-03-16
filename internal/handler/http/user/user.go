@@ -14,7 +14,7 @@ import (
 )
 
 type userUseCase interface {
-	GetByUserID(ctx context.Context, userID string) (user.User, error)
+	GetByID(ctx context.Context, userID string) (user.User, error)
 	Create(ctx context.Context, user user.User) (user.User, error)
 }
 
@@ -41,9 +41,9 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	user, err := h.UserUC.GetByUserID(ctx, userID)
+	user, err := h.UserUC.GetByID(ctx, userID)
 	if err != nil {
-		log.Error("[user.GetByUserID] error from GetByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		log.Error("[user.GetByUserID] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get user`)
 		return
 	}

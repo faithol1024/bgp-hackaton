@@ -32,7 +32,7 @@ func newRoutes(handler RouteHandlers) *chi.Mux {
 	router.Method(http.MethodPost, "/user", mw.HandlerFunc(handler.user.Create))
 
 	router.Method(http.MethodGet, "/gopay/user/{user_id}", mw.HandlerFunc(handler.gopay.GetByUserID))
-	router.Method(http.MethodGet, "/gopay/user/history/{user_id}", mw.HandlerFunc(handler.gopay.GetHistoryByUserID))
+	router.Method(http.MethodGet, "/gopay/user/history/{user_id}", mw.HandlerFunc(handler.gopay.GetAllHistoryByUserID))
 	router.Method(http.MethodGet, "/products", mw.HandlerFunc(handler.product.GetAll))
 	router.Method(http.MethodGet, "/products/buyer/{user_id}", mw.HandlerFunc(handler.product.GetAllByBuyer))
 	router.Method(http.MethodGet, "/products/seller/{user_id}", mw.HandlerFunc(handler.product.GetAllBySeller))

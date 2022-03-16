@@ -149,14 +149,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	product.Status = productEntity.StatusNew
 	err = h.ProductUC.Create(ctx, product)
 	if err != nil {
-		log.Error("[product.Create] error from GetByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		log.Error("[product.Create] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `gaboleh bikin product yee`)
 		return
 	}
 
 	// send the response
 	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, product); err != nil {
-		log.Error("[gopay.GetByUserID] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		log.Error("[product.Create] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	}
 }
 
@@ -182,9 +182,9 @@ func (h *Handler) Bid(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// // call the usecase
-	// gopay, err := h.GopayUC.GetByUserID(ctx, user_id)
+	// gopay, err := h.GopayUC.GetByID(ctx, user_id)
 	// if err != nil {
-	// 	log.Error("[gopay.GetByUserID] error from GetByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+	// 	log.Error("[product.Bid] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	// 	response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get gopay`)
 	// 	return
 	// }
@@ -193,6 +193,6 @@ func (h *Handler) Bid(w http.ResponseWriter, r *http.Request) {
 
 	// send the response
 	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, bid); err != nil {
-		log.Error("[gopay.GetByUserID] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		log.Error("[product.Bid] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	}
 }
