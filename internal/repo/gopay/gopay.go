@@ -3,6 +3,7 @@ package gopay
 import (
 	"context"
 	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -32,6 +33,7 @@ const (
 	gopayHistoryAttributes = "gopay_history_id,user_id,amount_idr,bid_id"
 )
 
+//TODO add redis
 func (r *Repo) GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error) {
 	result, err := r.db.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(gopayTable),

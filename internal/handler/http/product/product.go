@@ -87,7 +87,7 @@ func (h *Handler) GetAllBySeller(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call the usecase
-	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleBuyer)
+	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleSeller)
 	if err != nil {
 		log.Error("[product.GetAllBySeller] error from GetAllBySeller: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get seller product`)
@@ -161,8 +161,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Bid(w http.ResponseWriter, r *http.Request) {
-	// span, ctx := tracer.StartFromRequest(r)
-	// defer span.Finish()
+	span, ctx := tracer.StartFromRequest(r)
+	defer span.Finish()
 
 	var bid bid.Bid
 
@@ -181,18 +181,16 @@ func (h *Handler) Bid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// // call the usecase
-	// gopay, err := h.GopayUC.GetByID(ctx, user_id)
-	// if err != nil {
-	// 	log.Error("[product.Bid] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-	// 	response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get gopay`)
-	// 	return
-	// }
-
-	bid.BidID = "adasds"
+	// call the usecase
+	bidRes, err := h.ProductUC.Bid(ctx, bid)
+	if err != nil {
+		log.Error("[product.Bid] error from Bid: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error bidding`)
+		return
+	}
 
 	// send the response
-	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, bid); err != nil {
+	if _, err := response.WriteJSONAPIData(w, r, http.StatusOK, bidRes); err != nil {
 		log.Error("[product.Bid] error from WriteJSON: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
 	}
 }

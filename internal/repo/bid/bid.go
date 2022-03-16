@@ -26,3 +26,11 @@ func (r *Repo) PublishBidFRDB(ctx context.Context, bid bid.Bid) error {
 	}
 	return nil
 }
+
+func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
+	return bid.Bid{}, nil
+}
+
+func (r *Repo) AntiDoubleRequest(ctx context.Context, userID string) error {
+	return nil
+}
