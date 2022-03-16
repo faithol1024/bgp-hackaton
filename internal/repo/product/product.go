@@ -135,10 +135,15 @@ func (r *Repo) GetAllBySeller(ctx context.Context, userID string) ([]product.Pro
 
 }
 func (r *Repo) GetAllByBuyer(ctx context.Context, userProductIDs []string) ([]product.Product, error) {
-	//for test
-	//user id : 8c62ce89-7883-44c3-867e-50050cdb5b4c
-	//value userProductIDs : [af447cba-6220-4092-a46a-ceaf52df16d9 b6ddb393847e4df1b83477adf4646c28]
-	filt := expression.Name("product_id").In(expression.Value(userProductIDs))
+	var expressions []expression.OperandBuilder
+
+	for i, val := range userProductIDs {
+		if i == 0 {
+			continue
+		}
+		expressions = append(expressions, expression.Value(val))
+	}
+	filt := expression.Name("product_id").In(expression.Value(userProductIDs[0]), expressions...)
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
 		return []product.Product{}, ers.ErrorAddTrace(ers.ErrorAddTrace(err))
