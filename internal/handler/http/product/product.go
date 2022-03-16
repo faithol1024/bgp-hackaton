@@ -48,7 +48,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	product, err := h.ProductUC.GetByID(ctx, productID)
 	if err != nil {
 		log.Error("[product.GetByID] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get product by id`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	products, err := h.ProductUC.GetAll(ctx, "", "")
 	if err != nil {
 		log.Error("[product.GetAll] error from GetAll: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get all product`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -90,7 +90,7 @@ func (h *Handler) GetAllBySeller(w http.ResponseWriter, r *http.Request) {
 	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleSeller)
 	if err != nil {
 		log.Error("[product.GetAllBySeller] error from GetAllBySeller: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get seller product`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -115,7 +115,7 @@ func (h *Handler) GetAllByBuyer(w http.ResponseWriter, r *http.Request) {
 	products, err := h.ProductUC.GetAll(ctx, userID, user.RoleBuyer)
 	if err != nil {
 		log.Error("[product.GetAllByBuyer] error from GetAllByBuyer: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get buyer product`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -149,7 +149,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	product, err = h.ProductUC.Create(ctx, product)
 	if err != nil {
 		log.Error("[product.Create] error from GetByID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `gaboleh bikin product yee`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -184,7 +184,7 @@ func (h *Handler) Bid(w http.ResponseWriter, r *http.Request) {
 	bidRes, err := h.ProductUC.Bid(ctx, bid)
 	if err != nil {
 		log.Error("[product.Bid] error from Bid: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error bidding`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 

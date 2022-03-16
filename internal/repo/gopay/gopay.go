@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/gopay"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
+	"github.com/faithol1024/bgp-hackaton/lib/util"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/tokopedia/tdk/go/redis"
 )
 
@@ -76,6 +78,64 @@ func (r *Repo) Create(ctx context.Context, req gopay.GopaySaldo) (gopay.GopaySal
 	}
 
 	return req, nil
+}
+
+func (r *Repo) BookSaldo(ctx context.Context, userID, bidID string, amount int64) error {
+	type ExpressionAttr struct {
+		Decrement int64 `json:":val"`
+	}
+
+	expressionAttr, err := dynamodbattribute.MarshalMap(ExpressionAttr{Decrement: amount})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	key, err := dynamodbattribute.MarshalMap(gopay.GopaySaldo{
+		UserID: userID,
+	})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	gopayHistory := gopay.GopayHistory{
+		GopayHistoryID: util.GetStringUUID(),
+		UserID:         userID,
+		BidID:          bidID,
+	}
+
+	_, err = r.CreateHistory(ctx, gopayHistory)
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	_, err = r.db.UpdateItem(&dynamodb.UpdateItemInput{
+		Key:                       key,
+		TableName:                 aws.String(gopayTable),
+		UpdateExpression:          aws.String("set amount = amount - :val"),
+		ExpressionAttributeValues: expressionAttr,
+	})
+	if err != nil {
+		go r.DeleteHistory(ctx, gopayHistory)
+		return ers.ErrorAddTrace(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) DeleteHistory(ctx context.Context, req gopay.GopayHistory) error {
+	_, err := r.db.DeleteItem(&dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"gopay_history_id": {
+				N: aws.String(req.GopayHistoryID),
+			},
+		},
+		TableName: aws.String(gopayTable),
+	})
+	if err != nil {
+		log.Error(ers.ErrorAddTrace(err))
+		return ers.ErrorAddTrace(err)
+	}
+	return nil
 }
 
 func (r *Repo) CreateHistory(ctx context.Context, req gopay.GopayHistory) (gopay.GopayHistory, error) {

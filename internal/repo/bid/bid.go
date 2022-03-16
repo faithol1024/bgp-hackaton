@@ -3,13 +3,16 @@ package bid
 import (
 	"context"
 	"errors"
-	database "firebase.google.com/go/v4/db"
 	"fmt"
+	"time"
+
+	database "firebase.google.com/go/v4/db"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/bid"
+	"github.com/faithol1024/bgp-hackaton/internal/entity/product"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
 	"github.com/faithol1024/bgp-hackaton/lib/util"
 	redigo "github.com/gomodule/redigo/redis"
@@ -74,20 +77,21 @@ func (r *Repo) GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid,
 	return bids, nil
 }
 
-func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
-	//  err := r.SetHighestBidAmountByProductRedis(ctx, bidReq.ProductID, bidReq.Amount)
-	//  if err != nil {
+func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid, product product.Product) (bid.Bid, error) {
+	err := r.SetHighestBidAmountByProductRedis(ctx, bidReq, product)
+	if err != nil {
+		return bid.Bid{}, ers.ErrorAddTrace(err)
+	}
 
-	//  }
-	return bid.Bid{}, nil
+	return bidReq, nil
 }
 
 func (r *Repo) AntiDoubleRequest(ctx context.Context, userID string) error {
 	return nil
 }
 
-func (r *Repo) GetHighestBidAmountByProduct(ctx context.Context, productID string) (int64, error) {
-	redisRes, err := r.GetHighestBidAmountByProductRedis(ctx, productID)
+func (r *Repo) GetHighestBidAmountByProduct(ctx context.Context, product product.Product) (int64, error) {
+	redisRes, err := r.GetHighestBidAmountByProductRedis(ctx, product.ProductID)
 	if err != nil {
 		return 0, ers.ErrorAddTrace(err)
 	}
@@ -95,7 +99,7 @@ func (r *Repo) GetHighestBidAmountByProduct(ctx context.Context, productID strin
 		return redisRes, nil
 	}
 
-	DBRes, err := r.GetHighestBidAmountByProductDB(ctx, productID)
+	DBRes, err := r.GetHighestBidAmountByProductDB(ctx, product.ProductID)
 	if err != nil {
 		return 0, ers.ErrorAddTrace(err)
 	}
@@ -103,7 +107,7 @@ func (r *Repo) GetHighestBidAmountByProduct(ctx context.Context, productID strin
 		return 0, nil
 	}
 
-	err = r.SetHighestBidAmountByProductRedis(ctx, productID, DBRes.Amount)
+	err = r.SetHighestBidAmountByProductRedis(ctx, DBRes, product)
 	if err != nil {
 		log.Error(errors.New("Failed to save SetHighestBidAmountByProductRedis"), err)
 		return 0, nil
@@ -123,10 +127,28 @@ func (r *Repo) GetHighestBidAmountByProductRedis(ctx context.Context, productID 
 	return util.StrintToInt64(res), nil
 }
 
-func (r *Repo) SetHighestBidAmountByProductRedis(ctx context.Context, productID string, amount int64) error {
-	key := constructHighestBidAmount(productID)
-	err := r.cache.Set(key, amount)
+func (r *Repo) SetHighestBidAmountByProductRedis(ctx context.Context, bid bid.Bid, product product.Product) error {
+	key := constructHighestBidAmount(bid.ProductID)
+	ttl := product.EndTime - time.Now().Unix()
+	_, err := r.cache.SetEX(key, bid.Amount, int(ttl))
 	if err != nil && !ers.IsMatchError(err, redigo.ErrNil) {
+		return ers.ErrorAddTrace(err)
+	}
+
+	return nil
+}
+
+func (r *Repo) SetHighestBidAmountByProductDB(ctx context.Context, bid bid.Bid) error {
+	av, err := dynamodbattribute.MarshalMap(bid)
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(bidTable),
+	})
+	if err != nil {
 		return ers.ErrorAddTrace(err)
 	}
 

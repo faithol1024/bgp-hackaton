@@ -22,15 +22,17 @@ type productResource interface {
 }
 
 type bidResource interface {
-	Bid(ctx context.Context, bid bid.Bid) (bid.Bid, error)
-	GetHighestBidAmountByProduct(ctx context.Context, productID string) (int64, error)
+	Bid(ctx context.Context, bid bid.Bid, product productEntity.Product) (bid.Bid, error)
+	GetHighestBidAmountByProduct(ctx context.Context, product productEntity.Product) (int64, error)
 	AntiDoubleRequest(ctx context.Context, userID string) error
 	ReleaseAntiDoubleRequest(ctx context.Context, userID string) error
 	GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid, error)
+	SetHighestBidAmountByProductDB(ctx context.Context, bid bid.Bid) error
 }
 
 type gopayResource interface {
 	GetByUserID(ctx context.Context, userID string) (gopay.GopaySaldo, error)
+	BookSaldo(ctx context.Context, userID, bidID string, amount int64) error
 }
 
 type UseCase struct {
@@ -116,7 +118,7 @@ func (uc *UseCase) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
 		return bid.Bid{}, ers.ErrorAddTrace(err)
 	}
 
-	highestBid, err := uc.bidRsc.GetHighestBidAmountByProduct(ctx, bidReq.ProductID)
+	highestBid, err := uc.bidRsc.GetHighestBidAmountByProduct(ctx, product)
 	if err != nil {
 		return bid.Bid{}, ers.ErrorAddTrace(err)
 	}
@@ -128,10 +130,14 @@ func (uc *UseCase) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
 		return bid.Bid{}, ers.ErrorAddTrace(err)
 	}
 
-	bidRes, err := uc.bidRsc.Bid(ctx, bidReq)
+	go uc.gopayRsc.BookSaldo(ctx, bidReq.UserID, bidReq.BidID, bidReq.Amount)
+
+	bidRes, err := uc.bidRsc.Bid(ctx, bidReq, product)
 	if err != nil {
 		return bid.Bid{}, ers.ErrorAddTrace(err)
 	}
+
+	go uc.bidRsc.SetHighestBidAmountByProductDB(ctx, bidReq)
 
 	return bidRes, nil
 }
