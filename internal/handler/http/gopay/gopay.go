@@ -31,6 +31,10 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// params checking
 	userID := chi.URLParam(r, "user_id")
 	if userID == "" {
@@ -43,7 +47,7 @@ func (h *Handler) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	gopay, err := h.GopayUC.GetByUserID(ctx, userID)
 	if err != nil {
 		log.Error("[gopay.GetByUserID] error from GetByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get gopay`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -57,6 +61,10 @@ func (h *Handler) GetAllHistoryByUserID(w http.ResponseWriter, r *http.Request) 
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// params checking
 	userID := chi.URLParam(r, "user_id")
 	if userID == "" {
@@ -69,7 +77,7 @@ func (h *Handler) GetAllHistoryByUserID(w http.ResponseWriter, r *http.Request) 
 	gopayHistories, err := h.GopayUC.GetAllHistoryByUserID(ctx, userID)
 	if err != nil {
 		log.Error("[gopay.GetAllHistoryByUserID] error from GetAllHistoryByUserID: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get gopay history`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 

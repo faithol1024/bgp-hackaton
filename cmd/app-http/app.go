@@ -44,7 +44,7 @@ func startApp(cfg *config.Config) error {
 	gopayRepo := gopayrepo.New(dyna, redis)
 	userRepo := userrepo.New(dyna, redis)
 	productRepo := productrepo.New(dyna, redis)
-	bidRepo := bidrepo.New(dbrf)
+	bidRepo := bidrepo.New(dbrf, redis, dyna)
 
 	gopayUC := gopayusecase.New(gopayRepo)
 
@@ -53,7 +53,7 @@ func startApp(cfg *config.Config) error {
 		user:    userhandler.New(userusecase.New(userRepo, gopayUC)),
 		gopay:   gopayhandler.New(gopayUC),
 		bid:     bidhandler.New(bidusecase.New(bidRepo)),
-		product: producthandler.New(product.New(productRepo)),
+		product: producthandler.New(product.New(productRepo, bidRepo, gopayRepo, userRepo)),
 	})
 
 	return startServer(router, cfg)

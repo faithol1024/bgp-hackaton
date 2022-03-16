@@ -3,12 +3,10 @@ package gopay
 import (
 	"context"
 	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"github.com/faithol1024/bgp-hackaton/internal/entity/bid"
 	"github.com/faithol1024/bgp-hackaton/internal/entity/product"
 	ers "github.com/faithol1024/bgp-hackaton/lib/error"
 	"github.com/tokopedia/tdk/go/redis"
@@ -28,7 +26,7 @@ func New(db *dynamodb.DynamoDB, cache *redis.Client) *Repo {
 
 const (
 	productTable     = "product"
-	productAttribute = "product_id,user_id,name,image_url,description,start_bid,multiple_bid,start_time,end_time,highest_bid_id,total_bidder,status"
+	productAttribute = "product_id,user_id,#product_name,image_url,description,start_bid,multiple_bid,start_time,end_time,highest_bid_id,total_bidder,#product_status"
 )
 
 func (r *Repo) Create(ctx context.Context, product product.Product) error {
@@ -48,15 +46,56 @@ func (r *Repo) Create(ctx context.Context, product product.Product) error {
 	return nil
 }
 
+func (r *Repo) Update(ctx context.Context, req product.Product) error {
+	av, err := dynamodbattribute.MarshalMap(req)
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	type ExpressionAttr struct {
+		HighestBidID string `json:":highest_bid_id"`
+	}
+
+	expressionAttr, err := dynamodbattribute.MarshalMap(ExpressionAttr{
+		HighestBidID: req.HighestBidID})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	key, err := dynamodbattribute.MarshalMap(product.Product{
+		ProductID: req.ProductID,
+	})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	_, err = r.db.UpdateItem(&dynamodb.UpdateItemInput{
+		Key:                       key,
+		TableName:                 aws.String(productTable),
+		UpdateExpression:          aws.String("set highest_bid_id = :highest_bid_id"),
+		ExpressionAttributeValues: expressionAttr,
+	})
+	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(productTable),
+	})
+	if err != nil {
+		return ers.ErrorAddTrace(err)
+	}
+
+	return nil
+}
+
 func (r *Repo) GetByID(ctx context.Context, ID string) (product.Product, error) {
 	result, err := r.db.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(productTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"product_id": {
-				N: aws.String(ID),
+				S: aws.String(ID),
 			},
 		},
-		ProjectionExpression: aws.String(productAttribute),
+		ExpressionAttributeNames: map[string]*string{"#product_status": aws.String("status"), "#product_name": aws.String("name")},
+		ProjectionExpression:     aws.String(productAttribute),
 	})
 	if err != nil {
 		return product.Product{}, ers.ErrorAddTrace(err)
@@ -106,7 +145,7 @@ func (r *Repo) GetAll(ctx context.Context) ([]product.Product, error) {
 
 }
 func (r *Repo) GetAllBySeller(ctx context.Context, userID string) ([]product.Product, error) {
-	filt := expression.Name("user_id").Equal(expression.Value(product.StatusNew))
+	filt := expression.Name("user_id").Equal(expression.Value(userID))
 
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
@@ -135,10 +174,44 @@ func (r *Repo) GetAllBySeller(ctx context.Context, userID string) ([]product.Pro
 	return products, nil
 
 }
-func (r *Repo) GetAllByBuyer(ctx context.Context, userID string) ([]product.Product, error) {
-	return []product.Product{}, nil
+func (r *Repo) GetAllByBuyer(ctx context.Context, userProductIDs map[string]bool) ([]product.Product, error) {
+	var expressions []expression.OperandBuilder
 
-}
-func (r *Repo) Bid(ctx context.Context, bidReq bid.Bid) (bid.Bid, error) {
-	return bid.Bid{}, nil
+	i := 0
+	var first_expr expression.OperandBuilder
+	for product_id, _ := range userProductIDs {
+		if i == 0 {
+			first_expr = expression.Value(product_id)
+			i++
+			continue
+		}
+		expressions = append(expressions, expression.Value(product_id))
+		i++
+	}
+	filt := expression.Name("product_id").In(first_expr, expressions...)
+	expr, err := expression.NewBuilder().WithFilter(filt).Build()
+	if err != nil {
+		return []product.Product{}, ers.ErrorAddTrace(ers.ErrorAddTrace(err))
+	}
+
+	// Build the query input parameters
+	params := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(productTable),
+	}
+	result, err := r.db.Scan(params)
+	if err != nil {
+		return []product.Product{}, ers.ErrorAddTrace(err)
+	}
+
+	products := []product.Product{}
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &products)
+	if err != nil {
+		return []product.Product{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+	}
+
+	return products, nil
 }

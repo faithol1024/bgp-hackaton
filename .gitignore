@@ -1,3 +1,4 @@
 .idea
 bgp-hackathon-firebase-*.json
 vendor/
+bin/

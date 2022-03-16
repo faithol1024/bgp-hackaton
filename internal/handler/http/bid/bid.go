@@ -29,6 +29,10 @@ func (h *Handler) PublishBidFRDB(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartFromRequest(r)
 	defer span.Finish()
 
+	//Allow CORS here By *
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	//// params checking
 	//user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
 	//if err != nil {
@@ -47,7 +51,7 @@ func (h *Handler) PublishBidFRDB(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Error("[bid.PublishBidFRDB] error from PublishBidFRDB: ", ers.ErrorAddTrace(err), ers.ErrorGetTrace(err))
-		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, `error get bid`)
+		response.WriteJSONAPIError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
