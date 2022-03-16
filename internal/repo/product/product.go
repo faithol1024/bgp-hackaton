@@ -3,7 +3,6 @@ package gopay
 import (
 	"context"
 	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -135,7 +134,39 @@ func (r *Repo) GetAllBySeller(ctx context.Context, userID string) ([]product.Pro
 	return products, nil
 
 }
-func (r *Repo) GetAllByBuyer(ctx context.Context, userID string) ([]product.Product, error) {
-	return []product.Product{}, nil
+func (r *Repo) GetAllByBuyer(ctx context.Context, userProductIDs []string) ([]product.Product, error) {
+	var expressions []expression.OperandBuilder
 
+	for i, val := range userProductIDs {
+		if i == 0 {
+			continue
+		}
+		expressions = append(expressions, expression.Value(val))
+	}
+	filt := expression.Name("product_id").In(expression.Value(userProductIDs[0]), expressions...)
+	expr, err := expression.NewBuilder().WithFilter(filt).Build()
+	if err != nil {
+		return []product.Product{}, ers.ErrorAddTrace(ers.ErrorAddTrace(err))
+	}
+
+	// Build the query input parameters
+	params := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(productTable),
+	}
+	result, err := r.db.Scan(params)
+	if err != nil {
+		return []product.Product{}, ers.ErrorAddTrace(err)
+	}
+
+	products := []product.Product{}
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &products)
+	if err != nil {
+		return []product.Product{}, ers.ErrorAddTrace(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+	}
+
+	return products, nil
 }

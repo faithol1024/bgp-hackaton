@@ -18,7 +18,7 @@ type productResource interface {
 	GetByID(ctx context.Context, ID string) (productEntity.Product, error)
 	GetAll(ctx context.Context) ([]productEntity.Product, error)
 	GetAllBySeller(ctx context.Context, userID string) ([]productEntity.Product, error)
-	GetAllByBuyer(ctx context.Context, userID string) ([]productEntity.Product, error)
+	GetAllByBuyer(ctx context.Context, userProductIDs []string) ([]productEntity.Product, error)
 }
 
 type bidResource interface {
@@ -26,6 +26,7 @@ type bidResource interface {
 	GetHighestBidAmountByProduct(ctx context.Context, productID string) (int64, error)
 	AntiDoubleRequest(ctx context.Context, userID string) error
 	ReleaseAntiDoubleRequest(ctx context.Context, userID string) error
+	GetAllBidByUserID(ctx context.Context, userID string) ([]bid.Bid, error)
 }
 
 type gopayResource interface {
@@ -77,7 +78,11 @@ func (uc *UseCase) GetByID(ctx context.Context, ID string) (productEntity.Produc
 func (uc *UseCase) GetAll(ctx context.Context, userID string, role string) (products []productEntity.Product, err error) {
 	switch role {
 	case user.RoleBuyer:
-		products, err = uc.productRsc.GetAllByBuyer(ctx, userID)
+		allBidByUser, err := uc.bidRsc.GetAllBidByUserID(ctx, userID)
+		if err != nil {
+			return []productEntity.Product{}, ers.ErrorAddTrace(err)
+		}
+		products, err = uc.productRsc.GetAllByBuyer(ctx, bid.GetListProductIDFromListBid(allBidByUser))
 	case user.RoleSeller:
 		products, err = uc.productRsc.GetAllBySeller(ctx, userID)
 	default:
